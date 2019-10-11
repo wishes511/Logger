@@ -18,7 +18,7 @@ import java.sql.SQLException;
 public class ConexionServer {
     //db clientes
     Connection connect;
-    private final String URL = "jdbc:mysql://localhost:3306/soporte";
+    private final String URL = "jdbc:mysql://localhost:3306/logger";
     private final String drive = "com.mysql.jdbc.Driver";
     //db server
     public Connection getconexionS() throws ClassNotFoundException, IOException, SQLException {

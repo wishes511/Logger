@@ -324,7 +324,6 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
                 Logger.getLogger(tray.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
     }
 
     private void camposfile() throws FileNotFoundException, IOException {
