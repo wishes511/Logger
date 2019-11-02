@@ -83,5 +83,13 @@ public class Estado implements java.io.Serializable{
     public void setAutocaptura(String autocaptura) {
         this.autocaptura = autocaptura;
     }
-    private String idname, version, sincronizacion,sincronizacion_unit,autocaptura;
+    private String idname, version, sincronizacion,sincronizacion_unit,autocaptura,ipserver;
+
+    public String getIpserver() {
+        return ipserver;
+    }
+
+    public void setIpserver(String ipserver) {
+        this.ipserver = ipserver;
+    }
 }

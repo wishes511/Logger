@@ -35,5 +35,13 @@ public class usuarios implements java.io.Serializable{
         this.status = status;
     }
     private int id;
-    private String nombre,status;
+    private String nombre,status,tipo;
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
 }

