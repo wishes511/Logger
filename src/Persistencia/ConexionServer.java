@@ -23,12 +23,12 @@ import java.util.logging.Logger;
 public class ConexionServer {
     //db clientes
     Connection connect;
-    private final String URL = "jdbc:mysql://localhost:3306/logger";
-    private final String drive = "com.mysql.jdbc.Driver";
+        private final String URL = "jdbc:sqlserver://192.168.6.75\\SQLEXPRESS:9205;databaseName=logger";
+    private final String drive = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
     //db server
     public Connection getconexionS() throws ClassNotFoundException, IOException, SQLException {
         Class.forName(drive);
-          connect = DriverManager.getConnection(URL, "root", "416cronos");
+          connect = DriverManager.getConnection(URL, "mich", "mich");
           System.out.println("Conectado a server");
           return connect;
     }

@@ -29,7 +29,7 @@ public class ObjUsuario {
     public boolean checkuser(int usuario) {
         boolean resp = true;
         try {
-            st = s.getconexionS().prepareStatement("SELECT usuario from usuarios where startus='1' and tipo='S' and usuario=" + usuario);
+            st = s.getconexionS().prepareStatement("SELECT usuario from usuarios where startus='1' and usuario=" + usuario);
             rs = st.executeQuery();
             while (rs.next()) {
                 resp = false;

@@ -79,6 +79,7 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
             GlobalScreen.registerNativeHook();
             ConexionServer cs = new ConexionServer();
             ip = cs.ipserver();
+            System.out.println(ip);
             iniciodirectorios();//creación y generacion de directorios en cliente local.
             con = c.getconexionC();
             c.getrows(con, id);//verifica e inserta nueva linea en estado(solo la primera vez que se inicia).
@@ -226,7 +227,7 @@ public class tray extends javax.swing.JFrame implements NativeKeyListener {
 
     private void menuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItem1ActionPerformed
         String cadena = JOptionPane.showInputDialog(null, "Ingrese Contraseña :", DISPOSE_ON_CLOSE);
-        if (cadena.equals("Mich")) {
+        if (cadena.equals("mich")) {
             ttray.remove(Ticon);
             this.setVisible(true);
             if (proceso == false) {

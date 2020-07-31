@@ -28,7 +28,7 @@ public class Test {
             Conexion c = new Conexion();
             Movimiento m = new Movimiento();
             ObjMovimiento om = new ObjMovimiento();
-//            System.out.println(u.checkuser(3));
+            //System.out.println(u.checkuser(4));
 //            System.out.println(u.checkstate(3, c.getconexionC()));
 //            u.checkuser(3,c.getconexionC());
 //            Calendar fecha = Calendar.getInstance(); //intanciar informacion del calendiario respecto al sistema
